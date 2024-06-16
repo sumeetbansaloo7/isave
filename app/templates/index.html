@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iSave</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-color: #121212;
+            color: #ffffff;
+        }
+        input[type="text"], input[type="password"] {
+            width: 300px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-bottom: 20px;
+            background-color: #6200ea;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #3700b3;
+        }
+        .media-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .media-item {
+            margin: 10px;
+            border: 1px solid #333;
+            padding: 10px;
+            width: 200px;
+            background-color: #1e1e1e;
+            border-radius: 5px;
+        }
+        .media-item img, .media-item video {
+            max-width: 100%;
+            height: auto;
+        }
+        a {
+            color: #bb86fc;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>iSave</h1>
+    <input type="text" id="urlInput" placeholder="Enter Instagram post URL">
+    <input type="password" id="passwordInput" placeholder="Enter password">
+    <button onclick="downloadMedia()">Download</button>
+    <div id="mediaContainer" class="media-container"></div>
+
+    <script>
+        async function downloadMedia() {
+            const url = document.getElementById('urlInput').value;
+            const password = document.getElementById('passwordInput').value;
+
+            const response = await fetch('/download_media/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ url, password })
+            });
+
+            if (!response.ok) {
+                const errorMessage = await response.text();
+                alert(`Error: ${errorMessage}`);
+                return;
+            }
+
+            const result = await response.json();
+            displayMedia(result.media);
+        }
+
+        function displayMedia(media) {
+            const mediaContainer = document.getElementById('mediaContainer');
+            mediaContainer.innerHTML = '';
+            media.forEach((item, index) => {
+                const mediaItem = document.createElement('div');
+                mediaItem.className = 'media-item';
+
+                if (item.type === 'image') {
+                    const img = document.createElement('img');
+                    img.src = 'data:image/jpeg;base64,' + item.data;
+                    mediaItem.appendChild(img);
+                } else if (item.type === 'video') {
+                    const video = document.createElement('video');
+                    video.controls = true;
+                    video.src = 'data:video/mp4;base64,' + item.data;
+                    mediaItem.appendChild(video);
+                }
+
+                const downloadLink = document.createElement('a');
+                downloadLink.href = item.url;
+                downloadLink.download = `media_${index + 1}.${item.type === 'image' ? 'jpg' : 'mp4'}`;
+                downloadLink.textContent = 'Download';
+                mediaItem.appendChild(downloadLink);
+                mediaContainer.appendChild(mediaItem);
+            });
+        }
+    </script>
+</body>
+</html>
